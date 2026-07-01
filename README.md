@@ -7,7 +7,7 @@ The primary objective of this project is to build a predictive classification sy
 
 ## 📊 Dataset & Variables
 This project utilizes a dummy company dataset sourced from Kaggle. 
-* **Data Source:** [Kaggle Customer Churn Dataset](https://kaggle.com)
+* **Data Source:** (https://www.kaggle.com/datasets/harshitstark/dataset/data)
 * **Target Variable:** `Exited` (Binary classification representing customer churn).
 
 ### Data Dictionary
