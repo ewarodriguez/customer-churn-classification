@@ -38,7 +38,8 @@ To find the optimal predictive model, various supervised machine learning classi
 
 ## 📁 Repository Structure
 ```text
-├── streamlit/                   # Customize UI themes
+├── streamlit/                   
+│   └── config.toml              # Customize UI themes
 ├── models/
 │   └── RFClassifier_Model.pkl   # Trained Random Forest model file
 │   └── XgBoostClassifier_Model.pkl   # Trained XGBoost model file
