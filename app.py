@@ -97,6 +97,7 @@ def style_white_dataframe(df_subset, is_scaled=False):
         ])
     )
 
+
 # --- 🛠️ Sidebar Configuration Panel ---
 st.sidebar.header("⚙️ Model Configuration")
 
@@ -120,7 +121,8 @@ def format_model_name(file_name):
 selected_model_name = st.sidebar.selectbox(
     "Choose a model for prediction:", 
     model_files,
-    format_func=format_model_name
+    format_func=format_model_name,
+    on_change=force_slider_reset  # 🧠 Increments your version key immediately when model changes
 )
 
 # Dynamic fallback path handling for system flexibility
@@ -132,7 +134,6 @@ try:
 except Exception as e:
     st.sidebar.error(f"Could not load the model: {e}")
     st.stop()
-
 
 # --- 🔘 Interactive Prediction Run Controls ---
 run_inference = st.sidebar.button("Run Prediction", type="primary", use_container_width=True)
