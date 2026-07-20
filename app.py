@@ -222,9 +222,6 @@ if uploaded_file is not None:
         st.write("**Scaled Input Preview (Normalized Data)**")
         st.dataframe(style_white_dataframe(df_test_scaled.head(100), is_scaled=True), use_container_width=True)
 
-
-
-
     # --- Sidebar Configuration ---
     with st.sidebar:
         st.header("Model Settings")
@@ -234,40 +231,42 @@ if uploaded_file is not None:
             features_to_use = [col for col in df_test_scaled.columns if col not in ['id', 'Surname','CustomerId','Churn']]
             live_probs = model.predict_proba(df_test_scaled[features_to_use])[:, 1]
             
-            # Locked to your exact training baseline (34,921 / (130,113 + 34,921)) = ~21.16%
-            target_churn_percentage = 0.2116 
+            # # Locked to your exact training baseline (34,921 / (130,113 + 34,921)) = ~21.16%
+            # target_churn_percentage = 0.5 
             
-            # Find the exact risk boundary that isolates the top 21.16% highest-risk rows
-            percentile_needed = (1 - target_churn_percentage) * 100
-            import numpy as np
-            calculated_threshold = float(np.percentile(live_probs, percentile_needed))
+            # # Find the exact risk boundary that isolates the top 21.16% highest-risk rows
+            # percentile_needed = (1 - target_churn_percentage) * 100
+
+            # calculated_threshold = float(np.percentile(live_probs, percentile_needed))
+            calculated_threshold = 0.50
+
         except Exception:
-            calculated_threshold = 0.60
+            calculated_threshold = 0.50
 
         # Preserve the variable name 'suggested_threshold' globally for downstream metrics
         suggested_threshold = calculated_threshold
-        slider_default_value = max(0.10, min(0.90, round(suggested_threshold, 2)))
+        slider_default_value = max(0.00, min(1.00, round(suggested_threshold, 2)))
 
         # 4. Render the slider with a dynamic versioned key
         # Every time the button is clicked, the key changes (e.g., 'slider_v0' becomes 'slider_v1')
         custom_threshold = st.slider(
             label="Churn Decision Threshold",
-            min_value=0.10,
-            max_value=0.90,
+            min_value=0.00,
+            max_value=1.00,
             value=slider_default_value,  
             key=f"slider_v{st.session_state['slider_version']}", 
             step=0.01,
-            help=f"Adjust to manually shift metrics. The calculated value to match historical proportions is {suggested_threshold:.2f}."
+            help=f"Adjust to manually shift metrics. The default value is {suggested_threshold:.2f}."
         )
         
         # 5. THE RESET BUTTON: Calls the version incrementing function
         st.button("Reset to default", on_click=force_slider_reset)
         
-        # 6. Simple visual status indicator at the bottom
-        if abs(custom_threshold - suggested_threshold) < 0.015:
-            st.caption("✨ Slider matches mathematically recommended threshold.")
-        else:
-            st.caption("🔒 Manually overriding threshold recommendation.")
+        # # 6. Simple visual status indicator at the bottom
+        # if abs(custom_threshold - suggested_threshold) < 0.015:
+        #     st.caption("✨ Slider matches mathematically recommended threshold.")
+        # else:
+        #     st.caption("🔒 Manually overriding threshold recommendation.")
 
 
     # --- Prediction Processing & Charts ---
@@ -299,22 +298,22 @@ if uploaded_file is not None:
                 st.metric(
                     label="Current Selected Threshold", 
                     value=f"{custom_threshold:.2f}",
-                    delta=f"Dynamic Rate Match: {suggested_threshold:.2f}",
-                    delta_color="normal" if custom_threshold == round(suggested_threshold, 2) else "off"
+                    # delta=f"Dynamic Rate Match: {suggested_threshold:.2f}",
+                    # delta_color="normal" if custom_threshold == round(suggested_threshold, 2) else "off"
                 )
             with col2:
                 st.metric(label="Total Flagged Churners", value=f"{churned_count:,}")
             with col3:
                 st.metric(label="Current Churn Rate", value=f"{churn_rate:.2f}%")
                 
-            # Contextual alert banners for your dashboard operators
-            target_check = round(suggested_threshold, 2)
-            if custom_threshold < target_check:
-                st.info(f"⚠️ Threshold is lower than the calculated baseline ({suggested_threshold:.2f}). Expect higher false positives.")
-            elif custom_threshold > target_check:
-                st.info(f"ℹ️ Threshold is higher than the calculated baseline ({suggested_threshold:.2f}). Filtering risk more conservatively.")
-            else:
-                st.success("🎯 Your slider perfectly matches the dynamic historical churn rate proportion!")
+            # # Contextual alert banners for your dashboard operators
+            # target_check = round(suggested_threshold, 2)
+            # if custom_threshold < target_check:
+            #     st.info(f"⚠️ Threshold is lower than the calculated baseline ({suggested_threshold:.2f}). Expect higher false positives.")
+            # elif custom_threshold > target_check:
+            #     st.info(f"ℹ️ Threshold is higher than the calculated baseline ({suggested_threshold:.2f}). Filtering risk more conservatively.")
+            # else:
+            #     st.success("🎯 Your slider perfectly matches the dynamic historical churn rate proportion!")
 
         # except Exception as e:
         #     st.error(f"Prediction Error: {e}")
@@ -420,6 +419,41 @@ if uploaded_file is not None:
                 on_click="ignore"  # Keeps the action purely frontend to bypass script executions entirely
             )
 
+
+# --- 💡 Educational Explander Guidance Panel ---
+with st.sidebar.expander("ℹ️ Click to understand how the Churn Decision Threshold works"):
+    st.markdown("""
+    The **threshold** is the deciding line that translates the model's fuzzy risk probabilities (e.g., *"This customer has a 62% chance of leaving"*) into a definitive, actionable business decision (e.g., **"Yes, flag them as Churn"** or **"No, keep them as Safe"**). 
+
+    Without a threshold, the app would just display raw decimals instead of providing a clear headcount of at-risk accounts.
+
+    ---
+
+    ### 📉 Why Increasing the Threshold Lowers the Churn Count
+    When you **increase** the threshold (for example, moving it from `0.50` up to `0.80`), you make the rules for what qualifies as a "churner" much stricter. 
+
+    * **The Analogy:** Imagine a security guard at a VIP club. If the guard raises the entry standard to *only* let in people wearing expensive tuxedos, the number of people allowed inside drops drastically.
+    * **The Math:** If the threshold is `0.80`, a customer with a high risk score of `0.75` is no longer flagged. The model now ignores anyone it is mildly unsure about. It will only predict someone as a churner if it is **absolutely certain** (80% confidence or higher). Because fewer customers reach that extreme level of risk, your total predicted churn count goes down.
+
+    ---
+
+    ### 📈 Why Decreasing the Threshold Raises the Churn Count
+    Conversely, when you **decrease** the threshold (for example, dropping it from `0.50` down to `0.20`), you loosen the rules and cast a much wider net.
+
+    * **The Analogy:** The security guard lowers the standard to let in anyone wearing shoes. The club immediately fills up with people.
+    * **The Math:** If the threshold is `0.20`, a customer with a tiny risk score of `0.25` suddenly gets flagged as "Churn". The model becomes highly sensitive and sounds the alarm on anyone showing even the slightest hint of unhappiness. Because it takes very little risk to trigger a flag, your total predicted churn count shoots up.
+
+    ---
+
+    ### ⚙️ Why Balancing This Matters for Your Business
+
+    Adjusting the threshold allows you to manage the financial trade-off between two types of errors:
+
+    | Threshold Setting | Operational Focus | Business Impact |
+    | :--- | :--- | :--- |
+    | **High Threshold** (e.g., `0.80`) | **Precision** (Strict) | You only target the most desperate cases. You save money on retention rewards, but you accidentally miss and lose borderline customers (*False Negatives*). |
+    | **Low Threshold** (e.g., `0.20`) | **Recall** (Lenient) | You catch almost everyone who might leave. However, you waste marketing budget sending discounts to loyal customers who never planned to leave anyway (*False Positives*). |
+    """)
 
 
 
