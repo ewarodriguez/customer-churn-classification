@@ -95,7 +95,18 @@ if not model_files:
     st.sidebar.error(f"No model files found in the '{MODEL_DIR}/' directory. Please add a model.")
     st.stop()
 
-selected_model_name = st.sidebar.selectbox("Choose a model for prediction:", model_files)
+# Helper function to format the file name beautifully in the UI
+def format_model_name(file_name):
+    # Removes extension and replaces symbols with spaces (e.g., "Random_Forest_Model.pkl" -> "Random Forest Model")
+    name_without_ext = os.path.splitext(file_name)[0]
+    return name_without_ext.replace("_", " ").replace("-", " ")
+
+# The selectbox now uses format_func to change the visual label while keeping the actual file name as the value
+selected_model_name = st.sidebar.selectbox(
+    "Choose a model for prediction:", 
+    model_files,
+    format_func=format_model_name
+)
 
 # Dynamic fallback path handling for system flexibility
 APP_DIR = os.path.dirname(os.path.abspath(__file__)) if '__file__' in locals() else os.getcwd()
@@ -106,6 +117,7 @@ try:
 except Exception as e:
     st.sidebar.error(f"Could not load the model: {e}")
     st.stop()
+
 
 run_inference = st.sidebar.button("Run Prediction", type="primary", use_container_width=True)
 
@@ -182,38 +194,195 @@ if uploaded_file is not None:
         st.write("**Scaled Input Preview (Normalized Data)**")
         st.dataframe(style_white_dataframe(df_test_scaled.head(100), is_scaled=True), use_container_width=True)
 
+    # --- Sidebar Configuration ---
+    with st.sidebar:
+        st.header("Model Settings")
+        
+        # 1. Automate Target Rate Calibration dynamically using your training percentage
+        try:
+            features_to_use = [col for col in df_test_scaled.columns if col not in ['id', 'Surname','CustomerId','Churn']]
+            live_probs = model.predict_proba(df_test_scaled[features_to_use])[:, 1]
+            
+            # Locked to your exact training baseline (34,921 / (130,113 + 34,921)) = ~21.16%
+            target_churn_percentage = 0.2116 
+            
+            # Find the exact risk boundary that isolates the top 21.16% highest-risk rows
+            percentile_needed = (1 - target_churn_percentage) * 100
+            import numpy as np
+            suggested_threshold = float(np.percentile(live_probs, percentile_needed))
+        except:
+            # Fallback default value if the dataset isn't fully processed yet
+            suggested_threshold = 0.60
+
+        # 2. Render the slider using the dynamically calculated optimal value
+        custom_threshold = st.slider(
+            label="Churn Decision Threshold",
+            min_value=0.10,
+            max_value=0.90,
+            value=round(suggested_threshold, 2),  # Default matches your dynamic sweet spot
+            step=0.01,
+            help=f"Adjust to manually shift metrics. The calculated value to match historical proportions is {suggested_threshold:.2f}."
+        )
+
+    # # --- Prediction Processing & Charts ---
+    # if run_inference:
+    #     try:
+    #         # 3. Process predictions using the slider's active threshold value
+    #         preds = (live_probs >= custom_threshold).astype('int')
+            
+    #         df["Customer Churn Prediction"] = preds
+    #         st.session_state["predictions_complete"] = True
+    #         st.session_state["df_with_predictions"] = df.copy()
+
+    #         # --- Inference Dashboard Calculations ---
+    #         total_predicted = len(preds)
+    #         churned_count = int(sum(preds == 1))
+    #         retained_count = int(sum(preds == 0))
+    #         churn_rate = (churned_count / total_predicted) * 100
+
+    #         # --- VISUAL SUGGESTION METRICS ---
+    #         st.markdown("### 📊 Live Dashboard Metrics")
+            
+    #         col1, col2, col3 = st.columns(3)
+    #         with col1:
+    #             st.metric(
+    #                 label="Current Selected Threshold", 
+    #                 value=f"{custom_threshold:.2f}",
+    #                 delta=f"Dynamic Rate Match: {suggested_threshold:.2f}",
+    #                 delta_color="normal" if custom_threshold == round(suggested_threshold, 2) else "off"
+    #             )
+    #         with col2:
+    #             st.metric(label="Total Flagged Churners", value=f"{churned_count:,}")
+    #         with col3:
+    #             st.metric(label="Current Churn Rate", value=f"{churn_rate:.2f}%")
+                
+    #      # 4. Contextual alert banners for your dashboard operators
+    #         if custom_threshold < round(suggested_threshold, 2):
+    #             st.info(f"⚠️ Threshold is lower than the calculated baseline ({suggested_threshold:.2f}). Expect higher false positives.")
+    #         elif custom_threshold > round(suggested_threshold, 2):
+    #             st.info(f"ℹ️ Threshold is higher than the calculated baseline ({suggested_threshold:.2f}). Filtering risk more conservatively.")
+    #         else:
+    #             st.success("🎯 Your slider perfectly matches the dynamic historical churn rate proportion!")
+
     # --- Prediction Processing & Charts ---
     if run_inference:
         try:
-            features_to_use = [col for col in df_test_scaled.columns if col not in ['id', 'Surname','CustomerId','Churn']]
-            preds = model.predict(df_test_scaled[features_to_use])
+            # Safely generate probabilities if they weren't saved globally earlier
+            if 'live_probs' not in locals() or live_probs is None:
+                features_to_use = [col for col in df_test_scaled.columns if col not in ['id', 'Surname','CustomerId','Churn']]
+                live_probs = model.predict_proba(df_test_scaled[features_to_use])[:, 1]
+
+            # 3. Process predictions using the slider's active threshold value
+            preds = (live_probs >= custom_threshold).astype('int')
             
-            # Save predictions to global session state or df directly
-            df["Customer Churn Prediction"] = preds.astype('int')
+            df["Customer Churn Prediction"] = preds
             st.session_state["predictions_complete"] = True
             st.session_state["df_with_predictions"] = df.copy()
 
-            
             # --- Inference Dashboard Calculations ---
             total_predicted = len(preds)
             churned_count = int(sum(preds == 1))
             retained_count = int(sum(preds == 0))
             churn_rate = (churned_count / total_predicted) * 100
 
+            # --- VISUAL SUGGESTION METRICS ---
+            st.markdown("### 📊 Live Dashboard Metrics")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric(
+                    label="Current Selected Threshold", 
+                    value=f"{custom_threshold:.2f}",
+                    delta=f"Dynamic Rate Match: {suggested_threshold:.2f}",
+                    delta_color="normal" if custom_threshold == round(suggested_threshold, 2) else "off"
+                )
+            with col2:
+                st.metric(label="Total Flagged Churners", value=f"{churned_count:,}")
+            with col3:
+                st.metric(label="Current Churn Rate", value=f"{churn_rate:.2f}%")
+                
+            # 4. Contextual alert banners for your dashboard operators
+            # (Shifted inside the try block with uniform 12-space indentation)
+            target_check = round(suggested_threshold, 2)
+            if custom_threshold < target_check:
+                st.info(f"⚠️ Threshold is lower than the calculated baseline ({suggested_threshold:.2f}). Expect higher false positives.")
+            elif custom_threshold > target_check:
+                st.info(f"ℹ️ Threshold is higher than the calculated baseline ({suggested_threshold:.2f}). Filtering risk more conservatively.")
+            else:
+                st.success("🎯 Your slider perfectly matches the dynamic historical churn rate proportion!")
+
+        except Exception as e:
+            st.error(f"Prediction Error: {e}")
+
+
+    # # --- Sidebar Configuration ---
+    # with st.sidebar:
+    #     st.header("Model Settings")
+    #     # Creates an interactive slider to dynamically change the decision cutoff
+    #     custom_threshold = st.slider(
+    #         label="Churn Decision Threshold",
+    #         min_value=0.10,
+    #         max_value=0.90,
+    #         value=0.50,
+    #         step=0.01,
+    #         help="Higher values reduce over-prediction false alarms. Lower values flag more at-risk users."
+    #     )
+
+    # # --- Prediction Processing & Charts ---
+    # if run_inference:
+    #     try:
+    #         features_to_use = [col for col in df_test_scaled.columns if col not in ['id', 'Surname','CustomerId','Churn']]
+            
+    #         # 1. Get raw risk probabilities instead of default hard 1/0 boundaries
+    #         preds_proba = model.predict_proba(df_test_scaled[features_to_use])[:, 1]
+            
+    #         # 2. Convert probabilities into binary choices using the slider's live value
+    #         preds = (preds_proba >= custom_threshold).astype('int')
+            
+    #         # Save predictions to global session state or df directly
+    #         df["Customer Churn Prediction"] = preds
+    #         st.session_state["predictions_complete"] = True
+    #         st.session_state["df_with_predictions"] = df.copy()
+
+    #         # --- Inference Dashboard Calculations ---
+    #         total_predicted = len(preds)
+    #         churned_count = int(sum(preds == 1))
+    #         retained_count = int(sum(preds == 0))
+    #         churn_rate = (churned_count / total_predicted) * 100
+
+
+    # # --- Prediction Processing & Charts ---
+    # if run_inference:
+    #     try:
+    #         features_to_use = [col for col in df_test_scaled.columns if col not in ['id', 'Surname','CustomerId','Churn']]
+    #         preds = model.predict(df_test_scaled[features_to_use])
+            
+    #         # Save predictions to global session state or df directly
+    #         df["Customer Churn Prediction"] = preds.astype('int')
+    #         st.session_state["predictions_complete"] = True
+    #         st.session_state["df_with_predictions"] = df.copy()
+
+            
+    #         # --- Inference Dashboard Calculations ---
+    #         total_predicted = len(preds)
+    #         churned_count = int(sum(preds == 1))
+    #         retained_count = int(sum(preds == 0))
+    #         churn_rate = (churned_count / total_predicted) * 100
+
             st.write("---")
-            st.subheader("🎯 Inference Analytics")
+            st.subheader("🎯 Customer Retention Overview:")
             
             dashboard_col, chart_col = st.columns(2) 
             
             with dashboard_col:
-                st.metric(label="Predicted Churn Risk (Losing)", value=f"{churned_count:,} users")
-                st.metric(label="Predicted Retained (Keeping)", value=f"{retained_count:,} users")
+                st.metric(label="Predicted No. of Users to Churn (At Risk)", value=f"{churned_count:,} users")
+                st.metric(label="Predicted No. of Users Likely to Stay (Safe)", value=f"{retained_count:,} users")
                 st.metric(label="Overall Risk Percentage", value=f"{churn_rate:.1f}%")
                 
             with chart_col:
                 chart_df = pd.DataFrame({
-                    "Retained (0)": [retained_count],
-                    "Churn Risk (1)": [churned_count]
+                    "Likely to Churn (0)": [retained_count],
+                    "Churn/At Risk (1)": [churned_count]
                 })
                 st.bar_chart(chart_df, color=["#2ecc71", "#e74c3c"])
 

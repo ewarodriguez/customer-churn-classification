@@ -1,33 +1,35 @@
 # Customer Churn Prediction Model
 
 ## 📌 Project Overview
-Customer churn—the rate at which customers cancel their subscriptions—is a vital metric for businesses offering subscription services. Because it is significantly less expensive to retain an existing customer than it is to acquire a new one, predicting churn allows companies to take proactive measures for customer retention.
+Customer churn—the rate at which customers close their accounts—is a critical metric for retail banking. Because retaining an existing customer is significantly more cost-effective than acquiring a new one, predicting churn allows financial institutions to take proactive retention measures.
 
-The primary objective of this project is to build a predictive classification system that identifies high-risk customers before they churn, enabling targeted marketing campaigns and personalized incentives to improve business retention.
+The primary objective of this project is to build a predictive machine learning classification system. This system identifies high-risk customers before they leave, enabling targeted retention campaigns and personalized incentives to safeguard revenue.
 
 ## 📊 Dataset & Variables
-This project utilizes a dummy company dataset sourced from Kaggle. 
+This project utilizes a banking industry dataset sourced from Kaggle. 
+
 * **Data Source:** (https://www.kaggle.com/datasets/harshitstark/dataset/data)
-* **Target Variable:** `Exited` (Binary classification representing customer churn).
+* **Target Variable:** `Exited` (Binary classification representing customer churn)
 
 ### Data Dictionary
 
 | Variable Name | Description |
 | :--- | :--- |
-| **id** | The sequential number assigned to each row in the dataset. |
-| **CustomerId** | A unique identifier for each customer. |
+| **id** | Unique sequential row index. |
+| **CustomerId** | Unique identifier for each customer. |
 | **Surname** | The surname of the customer. |
-| **CreditScore** | The credit score of the customer. |
-| **Geography** | The geographical location of the customer (e.g., country or region). |
+| **CreditScore** | The customer's credit score. |
+| **Geography** | The country or region of residence. |
 | **Gender** | The gender of the customer. |
 | **Age** | The age of the customer. |
-| **Tenure** | The number of years the customer has been with the bank. |
-| **Balance** | The account balance of the customer. |
-| **NumOfProducts** | The number of bank products the customer has. |
-| **HasCrCard** | Indicates whether the customer has a credit card (binary: yes/no). |
-| **IsActiveMember** | Indicates whether the customer is an active member (binary: yes/no). |
-| **EstimatedSalary** | The estimated salary of the customer. |
-| **Exited** | Indicates whether the customer has exited the bank (binary: yes/no). |
+| **Tenure** | Number of years the customer has been with the bank. |
+| **Balance** | Current account balance. |
+| **NumOfProducts** | Number of bank products/services utilized. |
+| **HasCrCard** | Credit card ownership indicator (1 = Yes, 0 = No). |
+| **IsActiveMember** | Active status indicator (1 = Yes, 0 = No). |
+| **EstimatedSalary** | Estimated annual salary of the customer. |
+| **Exited** | Churn status indicator (1 = Churned, 0 = Retained). |
+
 
 ## ⚙️ Methodology & Algorithms
 To find the optimal predictive model, various supervised machine learning classification algorithms were implemented and evaluated:
@@ -39,15 +41,17 @@ To find the optimal predictive model, various supervised machine learning classi
 ## 📁 Repository Structure
 ```text
 ├── streamlit/                   
-│   └── config.toml              # Customize UI themes
+│   └── config.toml                          # Customize UI themes
 ├── models/
-│   └── RFClassifier_Model.pkl   # Trained Random Forest model file
-│   └── XgBoostClassifier_Model.pkl   # Trained XGBoost model file
-│   └── RobustScaler.pkl   # Robust Scaler file
+│   └── RFClassifier_Model.pkl               # Trained Random Forest model file
+│   └── XgBoostClassifier_Model.pkl          # Trained XGBoost model file
+│   └── RobustScaler.pkl                     # Robust Scaler file
 ├── notebooks/
 │   └── Classification_Customer_Churn.ipynb  # Jupyter notebook containing EDA and model building
-├── .gitignore                   # Configuration to exclude data files and dependencies
-└── README.md                    # Project documentation
+├── .gitignore                               # Configuration to exclude data files and dependencies
+└── app.py                                   # Main Python App File
+└── requirements.txt                         # Requirements File containing the package needed to build the app
+└── README.md                                # Project documentation
 ```
 
 ## 🚀 How to Run the Project
