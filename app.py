@@ -136,7 +136,7 @@ except Exception as e:
     st.stop()
 
 # --- 🔘 Interactive Prediction Run Controls ---
-run_inference = st.sidebar.button("Run Prediction", type="primary", use_container_width=True)
+run_inference = st.sidebar.button("Run Prediction", type="primary", width='stretch')
 if run_inference:
     st.session_state['prediction_run'] = True
 
@@ -145,7 +145,7 @@ if st.session_state['prediction_run']:
     st.sidebar.button(
         "Clear Prediction", 
         type="secondary", 
-        use_container_width=True, 
+        width='stretch', 
         on_click=handle_clear_prediction  # State updates instantly without breaking file upload context
     )
 
@@ -216,11 +216,11 @@ if uploaded_file is not None:
     
     with preview_col1:
         st.write("**Input Preview (Original Data)**")
-        st.dataframe(style_white_dataframe(df.head(100)), use_container_width=True)
+        st.dataframe(style_white_dataframe(df.head(100)), width='stretch')
 
     with preview_col2:
         st.write("**Scaled Input Preview (Normalized Data)**")
-        st.dataframe(style_white_dataframe(df_test_scaled.head(100), is_scaled=True), use_container_width=True)
+        st.dataframe(style_white_dataframe(df_test_scaled.head(100), is_scaled=True), width='stretch')
 
     # --- Sidebar Configuration ---
     with st.sidebar:
@@ -249,6 +249,18 @@ if uploaded_file is not None:
 
         # 4. Render the slider with a dynamic versioned key
         # Every time the button is clicked, the key changes (e.g., 'slider_v0' becomes 'slider_v1')
+
+        # Comprehensive markdown explanation for the tooltip
+        threshold_help_text = """
+        Adjust this slider to control how sensitive the AI models are when flagging at-risk customers.
+
+        **How it works:**
+        The model calculates a churn probability (0% to 100%) for each customer. This slider sets the cutoff point for a "Yes" or "No" decision.
+
+        *   **Default (50%):** A balanced approach. Customers with a 50% or greater chance of leaving are flagged.
+        *   **Lower it (< 50%):** **Catches more churners (Higher Recall).** Best if your retention campaigns are cheap (e.g., automated emails) and you cannot afford to miss anyone.
+        *   **Raise it (> 50%):** **Reduces false alarms (Higher Precision).** Best if your retention campaigns are expensive (e.g., heavy discounts) and you only want to target highly certain risks.
+        """
         custom_threshold = st.slider(
             label="Churn Decision Threshold",
             min_value=0.00,
@@ -256,8 +268,8 @@ if uploaded_file is not None:
             value=slider_default_value,  
             key=f"slider_v{st.session_state['slider_version']}", 
             step=0.01,
-            help=f"Adjust to manually shift metrics. The default value is {suggested_threshold:.2f}."
-        )
+            help=threshold_help_text
+                        )
         
         # 5. THE RESET BUTTON: Calls the version incrementing function
         st.button("Reset to default", on_click=force_slider_reset)
@@ -341,7 +353,7 @@ if uploaded_file is not None:
                 "Metric Parameters": ["Selected Pipeline Model", "Batch Constraint Limit", "Input Vector Count", "Features Extracted"],
                 "Details Summary": [str(selected_model_name), f"{total_predicted:,} Records", f"{len(features_to_use)} Features", ", ".join(features_to_use[:5]) + "..."]
             }
-            st.dataframe(style_white_dataframe(pd.DataFrame(report_data).set_index("Metric Parameters")), use_container_width=True)
+            st.dataframe(style_white_dataframe(pd.DataFrame(report_data).set_index("Metric Parameters")), width='stretch')
 
         except Exception as e:
             st.error(f"Error during prediction logic: {e}")
@@ -379,7 +391,7 @@ if uploaded_file is not None:
             # Interactive read-only viewport render 
             st.dataframe(
                 styled_output_df, 
-                use_container_width=True 
+                width='stretch' 
                 # disabled=True
             )
         else:
@@ -421,7 +433,7 @@ if uploaded_file is not None:
 
 
 # --- 💡 Educational Explander Guidance Panel ---
-with st.sidebar.expander("ℹ️ Click to understand how the Churn Decision Threshold works"):
+with st.sidebar.expander("ℹ️ Click for more information on how the Churn Decision Threshold works"):
     st.markdown("""
     The **threshold** is the deciding line that translates the model's fuzzy risk probabilities (e.g., *"This customer has a 62% chance of leaving"*) into a definitive, actionable business decision (e.g., **"Yes, flag them as Churn"** or **"No, keep them as Safe"**). 
 
