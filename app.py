@@ -280,6 +280,41 @@ if uploaded_file is not None:
         # else:
         #     st.caption("🔒 Manually overriding threshold recommendation.")
 
+    # --- 💡 Educational Explander Guidance Panel ---
+        with st.sidebar.expander("ℹ️ Click for more information on how the Churn Decision Threshold works"):
+            st.markdown("""
+            The **threshold** is the deciding line that translates the model's fuzzy risk probabilities (e.g., *"This customer has a 62% chance of leaving"*) into a definitive, actionable business decision (e.g., **"Yes, flag them as Churn"** or **"No, keep them as Safe"**). 
+
+            Without a threshold, the app would just display raw decimals instead of providing a clear headcount of at-risk accounts.
+
+            ---
+
+            ### 📉 Why Increasing the Threshold Lowers the Churn Count
+            When you **increase** the threshold (for example, moving it from `0.50` up to `0.80`), you make the rules for what qualifies as a "churner" much stricter. 
+
+            * **The Analogy:** Imagine a security guard at a VIP club. If the guard raises the entry standard to *only* let in people wearing expensive tuxedos, the number of people allowed inside drops drastically.
+            * **The Math:** If the threshold is `0.80`, a customer with a high risk score of `0.75` is no longer flagged. The model now ignores anyone it is mildly unsure about. It will only predict someone as a churner if it is **absolutely certain** (80% confidence or higher). Because fewer customers reach that extreme level of risk, your total predicted churn count goes down.
+
+            ---
+
+            ### 📈 Why Decreasing the Threshold Raises the Churn Count
+            Conversely, when you **decrease** the threshold (for example, dropping it from `0.50` down to `0.20`), you loosen the rules and cast a much wider net.
+
+            * **The Analogy:** The security guard lowers the standard to let in anyone wearing shoes. The club immediately fills up with people.
+            * **The Math:** If the threshold is `0.20`, a customer with a tiny risk score of `0.25` suddenly gets flagged as "Churn". The model becomes highly sensitive and sounds the alarm on anyone showing even the slightest hint of unhappiness. Because it takes very little risk to trigger a flag, your total predicted churn count shoots up.
+
+            ---
+
+            ### ⚙️ Why Balancing This Matters for Your Business
+
+            Adjusting the threshold allows you to manage the financial trade-off between two types of errors:
+
+            | Threshold Setting | Operational Focus | Business Impact |
+            | :--- | :--- | :--- |
+            | **High Threshold** (e.g., `0.80`) | **Precision** (Strict) | You only target the most desperate cases. You save money on retention rewards, but you accidentally miss and lose borderline customers (*False Negatives*). |
+            | **Low Threshold** (e.g., `0.20`) | **Recall** (Lenient) | You catch almost everyone who might leave. However, you waste marketing budget sending discounts to loyal customers who never planned to leave anyway (*False Positives*). |
+            """)
+
 
     # --- Prediction Processing & Charts ---
     if run_inference:
@@ -432,40 +467,7 @@ if uploaded_file is not None:
             )
 
 
-# --- 💡 Educational Explander Guidance Panel ---
-with st.sidebar.expander("ℹ️ Click for more information on how the Churn Decision Threshold works"):
-    st.markdown("""
-    The **threshold** is the deciding line that translates the model's fuzzy risk probabilities (e.g., *"This customer has a 62% chance of leaving"*) into a definitive, actionable business decision (e.g., **"Yes, flag them as Churn"** or **"No, keep them as Safe"**). 
 
-    Without a threshold, the app would just display raw decimals instead of providing a clear headcount of at-risk accounts.
-
-    ---
-
-    ### 📉 Why Increasing the Threshold Lowers the Churn Count
-    When you **increase** the threshold (for example, moving it from `0.50` up to `0.80`), you make the rules for what qualifies as a "churner" much stricter. 
-
-    * **The Analogy:** Imagine a security guard at a VIP club. If the guard raises the entry standard to *only* let in people wearing expensive tuxedos, the number of people allowed inside drops drastically.
-    * **The Math:** If the threshold is `0.80`, a customer with a high risk score of `0.75` is no longer flagged. The model now ignores anyone it is mildly unsure about. It will only predict someone as a churner if it is **absolutely certain** (80% confidence or higher). Because fewer customers reach that extreme level of risk, your total predicted churn count goes down.
-
-    ---
-
-    ### 📈 Why Decreasing the Threshold Raises the Churn Count
-    Conversely, when you **decrease** the threshold (for example, dropping it from `0.50` down to `0.20`), you loosen the rules and cast a much wider net.
-
-    * **The Analogy:** The security guard lowers the standard to let in anyone wearing shoes. The club immediately fills up with people.
-    * **The Math:** If the threshold is `0.20`, a customer with a tiny risk score of `0.25` suddenly gets flagged as "Churn". The model becomes highly sensitive and sounds the alarm on anyone showing even the slightest hint of unhappiness. Because it takes very little risk to trigger a flag, your total predicted churn count shoots up.
-
-    ---
-
-    ### ⚙️ Why Balancing This Matters for Your Business
-
-    Adjusting the threshold allows you to manage the financial trade-off between two types of errors:
-
-    | Threshold Setting | Operational Focus | Business Impact |
-    | :--- | :--- | :--- |
-    | **High Threshold** (e.g., `0.80`) | **Precision** (Strict) | You only target the most desperate cases. You save money on retention rewards, but you accidentally miss and lose borderline customers (*False Negatives*). |
-    | **Low Threshold** (e.g., `0.20`) | **Recall** (Lenient) | You catch almost everyone who might leave. However, you waste marketing budget sending discounts to loyal customers who never planned to leave anyway (*False Positives*). |
-    """)
 
 
 
