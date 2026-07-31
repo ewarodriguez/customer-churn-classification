@@ -371,13 +371,13 @@ if uploaded_file is not None:
             dashboard_col, chart_col = st.columns(2) 
             
             with dashboard_col:
-                st.metric(label="Predicted No. of Users to Churn (At Risk)", value=f"{churned_count:,} users")
                 st.metric(label="Predicted No. of Users Likely to Stay (Safe)", value=f"{retained_count:,} users")
+                st.metric(label="Predicted No. of Users to Churn (At Risk)", value=f"{churned_count:,} users")
                 st.metric(label="Overall Risk Percentage", value=f"{churn_rate:.1f}%")
                 
             with chart_col:
                 chart_df = pd.DataFrame({
-                    "Likely to Churn (0)": [retained_count],
+                    "Likely to Stay (0)": [retained_count],
                     "Churn/At Risk (1)": [churned_count]
                 })
                 st.bar_chart(chart_df, color=["#2ecc71", "#e74c3c"])
