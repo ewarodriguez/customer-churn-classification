@@ -4,6 +4,7 @@ import pickle
 import io
 import os
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, RobustScaler
+import plotly.express as px
 
 st.set_page_config(
     page_title="Customer Churn Prediction App",
@@ -375,12 +376,45 @@ if uploaded_file is not None:
                 st.metric(label="Predicted No. of Users to Churn (At Risk)", value=f"{churned_count:,} users")
                 st.metric(label="Overall Risk Percentage", value=f"{churn_rate:.1f}%")
                 
+            # with chart_col:
+            #     chart_df = pd.DataFrame({
+            #         "Likely to Stay (0)": [retained_count],
+            #         "Churn/At Risk (1)": [churned_count]
+            #     })
+            #     st.bar_chart(chart_df, color=["#2ecc71", "#e74c3c"])
+            
+            # with chart_col:
+            #     # Structure data vertically: Categories as rows, counts in a single column
+            #     chart_df = pd.DataFrame(
+            #         {"Count": [retained_count, churned_count]},
+            #         index=["Likely to Stay (Safe)", "Churn/At Risk (At Risk)"]
+            #     )
+                
+            #     # Pass the column name to y, and Streamlit will automatically map the index to x
+            #     st.bar_chart(chart_df, y="Count", color=["#2ecc71", "#e74c3c"])
+
             with chart_col:
+
+
+                # 1. Simple data setup
                 chart_df = pd.DataFrame({
-                    "Likely to Stay (0)": [retained_count],
-                    "Churn/At Risk (1)": [churned_count]
+                    "Status": ["Likely to Stay (Safe)", "Churn/At Risk"],
+                    "Count": [retained_count, churned_count]
                 })
-                st.bar_chart(chart_df, color=["#2ecc71", "#e74c3c"])
+                
+                # 2. Create the chart with your exact hex colors
+                fig = px.bar(
+                    chart_df, 
+                    x="Status", 
+                    y="Count", 
+                    color="Status",
+                    color_discrete_map={"Likely to Stay (Safe)": "#2ecc71", "Churn/At Risk": "#e74c3c"}
+                )
+                
+                # 3. Clean up layout styling
+                fig.update_layout(showlegend=False, xaxis_title=None, yaxis_title="Count", margin=dict(t=10, b=10, l=10, r=10))
+                
+                st.plotly_chart(fig, width='stretch')                
 
             # --- Model Performance Report Table ---
             st.subheader("📋 Model Run Specifications")
