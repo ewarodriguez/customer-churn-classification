@@ -212,7 +212,7 @@ if uploaded_file is not None:
     
     with kpi_col1:
         with st.container(border=True):
-            st.metric(label="Total Customer Records", value=f"{len(df):,}")
+            st.metric(label="Total CustomerId Count", value=f"{len(df):,}")
             
     with kpi_col2:
         with st.container(border=True):
@@ -366,7 +366,7 @@ if uploaded_file is not None:
 
             with col4:
                 with st.container(border=True):
-                    st.metric(label="Total Customer Count", value=f"{retained_count+churned_count:,}")
+                    st.metric(label="Total CustomerId Count", value=f"{retained_count+churned_count:,}")
 
             with col5:
                 with st.container(border=True):
@@ -399,7 +399,7 @@ if uploaded_file is not None:
                 fig.update_layout(
                     showlegend=False, 
                     xaxis_title="Status", 
-                    yaxis_title="Number of Customers", 
+                    yaxis_title="Total CustomerId Count", 
                     margin=dict(t=10, b=10, l=10, r=10)
                 )
 
@@ -476,8 +476,10 @@ if uploaded_file is not None:
             csv_data = download_df.to_csv(index=True, index_label="Index").encode('utf-8')
             
             # Fetch and format the current date (YYYY-MM-DD)
-            from datetime import datetime
-            current_date = datetime.now().strftime("%Y-%m-%d")
+            from datetime import datetime, timezone
+            current_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+            print(current_date)
+            # Output example: 2026-09-10 13:41:00 UTC
             
             st.download_button(
                 label="📥 Download Full Predictions File (CSV)",
