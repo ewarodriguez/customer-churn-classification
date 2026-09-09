@@ -10,15 +10,18 @@ st.set_page_config(
     page_title="Customer Churn Prediction App",
     layout="wide" 
 )
-st.title("Customer Churn Prediction App 🔮")
+st.title("🔮 Customer Churn Prediction App")
+st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
 
 
-# --- 🔄 Initialize State Trackers ---
+# --- Initialize State Trackers ---
 if 'prediction_run' not in st.session_state:
     st.session_state['prediction_run'] = False
 
 if 'slider_version' not in st.session_state:
     st.session_state['slider_version'] = 0
+
+###FUNCTIONS
 
 def force_slider_reset():
     st.session_state['slider_version'] += 1
@@ -27,7 +30,7 @@ def force_slider_reset():
 def handle_clear_prediction():
     st.session_state['prediction_run'] = False
 
-# --- 🚀 Cached Resource Loaders to Boost App Performance ---
+# --- Cached Resource Loaders to Boost App Performance ---
 @st.cache_resource(show_spinner="Loading selected model...")
 def load_ml_model(model_folder, model_name):
     path = os.path.join(model_folder, model_name)
@@ -99,7 +102,7 @@ def style_white_dataframe(df_subset, is_scaled=False):
     )
 
 
-# --- 🛠️ Sidebar Configuration Panel ---
+# --- Sidebar Configuration Panel ---
 st.sidebar.header("⚙️ Model Configuration")
 
 MODEL_DIR = "models"
@@ -123,7 +126,7 @@ selected_model_name = st.sidebar.selectbox(
     "Choose a model for prediction:", 
     model_files,
     format_func=format_model_name,
-    on_change=force_slider_reset  # 🧠 Increments your version key immediately when model changes
+    on_change=force_slider_reset  # Increments your version key immediately when model changes
 )
 
 # Dynamic fallback path handling for system flexibility
@@ -136,7 +139,7 @@ except Exception as e:
     st.sidebar.error(f"Could not load the model: {e}")
     st.stop()
 
-# --- 🔘 Interactive Prediction Run Controls ---
+# --- Interactive Prediction Run Controls ---
 run_inference = st.sidebar.button("Run Prediction", type="primary", width='stretch')
 if run_inference:
     st.session_state['prediction_run'] = True
@@ -202,30 +205,35 @@ if uploaded_file is not None:
     df_test_scaled = df_test_scaled.reindex(columns=df.columns)
 
 
-
-    # --- 📈 Top KPI Dashboard Summary Cards ---
-    st.subheader("📊 Dataset Summary")
+    # --- Top KPI Dashboard Summary Cards ---
+    st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
+    st.subheader("🔍 Dataset Preview")
     kpi_col1, kpi_col2 = st.columns(2)
+    
     with kpi_col1:
-        st.metric(label="Total Customer Records Loaded", value=f"{len(df):,}")
+        with st.container(border=True):
+            st.metric(label="Total Customer Records", value=f"{len(df):,}")
+            
     with kpi_col2:
-        st.metric(label="Historical Columns Extracted", value=f"{len(df.columns)}")
+        with st.container(border=True):
+            st.metric(label="Number of Columns", value=f"{len(df.columns)}")
+
 
     # --- 🔀 Side-by-Side Data Exploration Previews ---
-    st.write("---")
+    st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
     preview_col1, preview_col2 = st.columns(2)
     
     with preview_col1:
-        st.write("**Input Preview (Original Data)**")
+        st.write("**Original Data**")
         st.dataframe(style_white_dataframe(df.head(100)), width='stretch')
 
     with preview_col2:
-        st.write("**Scaled Input Preview (Normalized Data)**")
+        st.write("**Scaled Data(Normalized using RobustScaler)**")
         st.dataframe(style_white_dataframe(df_test_scaled.head(100), is_scaled=True), width='stretch')
 
     # --- Sidebar Configuration ---
     with st.sidebar:
-        st.header("Model Settings")
+        st.header("🛠️ Additional Settings")
         
         # 3. RUN MATH BEHIND THE SCENES: Automate Target Rate Calibration using your fixed training percentage
         try:
@@ -306,7 +314,7 @@ if uploaded_file is not None:
 
             ---
 
-            ### ⚙️ Why Balancing This Matters for Your Business
+            ### ⚖️ Why Balancing This Matters for Your Business
 
             Adjusting the threshold allows you to manage the financial trade-off between two types of errors:
 
@@ -339,69 +347,45 @@ if uploaded_file is not None:
             churn_rate = (churned_count / total_predicted) * 100
 
             # --- VISUAL SUGGESTION METRICS ---
-            st.markdown("### 📊 Dashboard Metrics")
+            st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
+            st.markdown("### 📊 Churn Metrics")
             
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4, col5 = st.columns(5)
+
             with col1:
-                st.metric(
-                    label="Current Selected Threshold", 
-                    value=f"{custom_threshold:.2f}",
-                    # delta=f"Dynamic Rate Match: {suggested_threshold:.2f}",
-                    # delta_color="normal" if custom_threshold == round(suggested_threshold, 2) else "off"
-                )
+                with st.container(border=True):
+                    st.metric(label="Churn Rate", value=f"{churn_rate:.2f}%")
+
             with col2:
-                st.metric(label="Total Flagged Churners", value=f"{churned_count:,}")
+                with st.container(border=True):
+                    st.metric(label="Total Flagged Churners", value=f"{churned_count:,}")
+
             with col3:
-                st.metric(label="Current Churn Rate", value=f"{churn_rate:.2f}%")
-                
-            # # Contextual alert banners for your dashboard operators
-            # target_check = round(suggested_threshold, 2)
-            # if custom_threshold < target_check:
-            #     st.info(f"⚠️ Threshold is lower than the calculated baseline ({suggested_threshold:.2f}). Expect higher false positives.")
-            # elif custom_threshold > target_check:
-            #     st.info(f"ℹ️ Threshold is higher than the calculated baseline ({suggested_threshold:.2f}). Filtering risk more conservatively.")
-            # else:
-            #     st.success("🎯 Your slider perfectly matches the dynamic historical churn rate proportion!")
+                with st.container(border=True):
+                    st.metric(label="Total Flagged Retained", value=f"{retained_count:,}")
 
-        # except Exception as e:
-        #     st.error(f"Prediction Error: {e}")
+            with col4:
+                with st.container(border=True):
+                    st.metric(label="Total Customer Count", value=f"{retained_count+churned_count:,}")
 
-            st.write("---")
-            st.subheader("🎯 Customer Retention Overview:")
+            with col5:
+                with st.container(border=True):
+                    st.metric(
+                        label="Selected Threshold", 
+                        value=f"{custom_threshold:.2f}",
+                        # delta=f"Dynamic Rate Match: {suggested_threshold:.2f}",
+                        # delta_color="normal" if custom_threshold == round(suggested_threshold, 2) else "off"
+                    )
+
             
-            dashboard_col, chart_col = st.columns(2) 
-            
-            with dashboard_col:
-                st.metric(label="Predicted No. of Users Likely to Stay (Safe)", value=f"{retained_count:,} users")
-                st.metric(label="Predicted No. of Users to Churn (At Risk)", value=f"{churned_count:,} users")
-                st.metric(label="Overall Risk Percentage", value=f"{churn_rate:.1f}%")
-                
-            # with chart_col:
-            #     chart_df = pd.DataFrame({
-            #         "Likely to Stay (0)": [retained_count],
-            #         "Churn/At Risk (1)": [churned_count]
-            #     })
-            #     st.bar_chart(chart_df, color=["#2ecc71", "#e74c3c"])
-            
-            # with chart_col:
-            #     # Structure data vertically: Categories as rows, counts in a single column
-            #     chart_df = pd.DataFrame(
-            #         {"Count": [retained_count, churned_count]},
-            #         index=["Likely to Stay (Safe)", "Churn/At Risk (At Risk)"]
-            #     )
-                
-            #     # Pass the column name to y, and Streamlit will automatically map the index to x
-            #     st.bar_chart(chart_df, y="Count", color=["#2ecc71", "#e74c3c"])
-
-            with chart_col:
-
-
+            st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
+            with st.container(border=True):
                 # 1. Simple data setup
                 chart_df = pd.DataFrame({
                     "Status": ["Likely to Stay (Safe)", "Churn/At Risk"],
                     "Count": [retained_count, churned_count]
                 })
-                
+
                 # 2. Create the chart with your exact hex colors
                 fig = px.bar(
                     chart_df, 
@@ -410,14 +394,23 @@ if uploaded_file is not None:
                     color="Status",
                     color_discrete_map={"Likely to Stay (Safe)": "#2ecc71", "Churn/At Risk": "#e74c3c"}
                 )
-                
+
                 # 3. Clean up layout styling
-                fig.update_layout(showlegend=False, xaxis_title=None, yaxis_title="Count", margin=dict(t=10, b=10, l=10, r=10))
+                fig.update_layout(
+                    showlegend=False, 
+                    xaxis_title="Status", 
+                    yaxis_title="Number of Customers", 
+                    margin=dict(t=10, b=10, l=10, r=10)
+                )
+
+                # 4. Display the chart across the full width of the app
+                st.plotly_chart(fig, width="stretch")
                 
-                st.plotly_chart(fig, width='stretch')                
+
 
             # --- Model Performance Report Table ---
-            st.subheader("📋 Model Run Specifications")
+            st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
+            st.subheader("📋 Model Specifications")
             report_data = {
                 "Metric Parameters": ["Selected Pipeline Model", "Batch Constraint Limit", "Input Vector Count", "Features Extracted"],
                 "Details Summary": [str(selected_model_name), f"{total_predicted:,} Records", f"{len(features_to_use)} Features", ", ".join(features_to_use[:5]) + "..."]
@@ -428,14 +421,9 @@ if uploaded_file is not None:
             st.error(f"Error during prediction logic: {e}")
 
     # --- 🔍 Interactive Spreadsheet Explorer ---
-    # if "df_with_predictions" in st.session_state:
-    #     st.write("---")
-    #     st.subheader("📋 Interactive Spreadsheet Explorer")
-    #     st.caption("💡 **Tip:** Click any column header to sort. Hover over the grid or select cells to access row search tools natively.")
-
+        st.markdown("<br>", unsafe_allow_html=True) # Adds a clean HTML line break
         if "df_with_predictions" in st.session_state and st.session_state['prediction_run']:
-            st.write("---")
-            st.subheader("📋 Interactive Spreadsheet Explorer")
+            st.subheader("👀 Quick Preview: Prediction Results")
             st.caption("💡 **Tip:** Click any column header to sort. Hover over the grid or select cells to access row search tools natively.")        
         # Load prediction data snapshot
         display_output_df = st.session_state["df_with_predictions"].copy()
@@ -492,7 +480,7 @@ if uploaded_file is not None:
             current_date = datetime.now().strftime("%Y-%m-%d")
             
             st.download_button(
-                label="📥 Download Full Predictions (CSV)",
+                label="📥 Download Full Predictions File (CSV)",
                 data=csv_data,
                 file_name=f"customer_churn_predictions_{current_date}.csv",
                 mime="text/csv",

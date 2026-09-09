@@ -8,3 +8,7 @@ notebooks/*.csv
 run_app.py
 
 .devcontainer
+
+Dockerfile
+docker-compose.yml
+.dockerignore
