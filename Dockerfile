@@ -1,0 +1,88 @@
+FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim
+
+# Optimizations & Path defaults
+ENV PYTHONUNBUFFERED=1
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_PYTHON_DOWNLOADS=0
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Setup secure non-root user (UID 999)
+RUN groupadd --system --gid 999 nonroot \
+ && useradd --system --gid 999 --uid 999 --create-home nonroot
+
+WORKDIR /app
+
+# Standard explicit layer copy: No experimental multi-stage ghost layers
+COPY pyproject.toml uv.lock ./
+
+# Install strict production-only packages directly into the image filesystem
+RUN uv sync --frozen --no-dev
+
+# Copy only the application files and structural configurations
+COPY --chown=nonroot:nonroot app.py ./app.py
+COPY --chown=nonroot:nonroot .streamlit/config.toml ./.streamlit/config.toml
+
+USER nonroot
+EXPOSE 8501
+
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+
+# # First, build the application in the `/app` directory.
+# # See `Dockerfile` for details.
+# FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim AS builder
+# ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+
+# # Omit development dependencies
+# ENV UV_NO_DEV=1
+
+# # Disable Python downloads, because we want to use the system interpreter
+# # across both images. If using a managed Python version, it needs to be
+# # copied from the build image into the final image; see `standalone.Dockerfile`
+# # for an example.
+# ENV UV_PYTHON_DOWNLOADS=0
+
+# WORKDIR /app
+# RUN --mount=type=cache,target=/root/.cache/uv \
+#     --mount=type=bind,source=uv.lock,target=uv.lock \
+#     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+#     uv sync --locked --no-install-project
+# COPY . /app
+# RUN --mount=type=cache,target=/root/.cache/uv \
+#     uv sync --locked
+
+
+# # Then, use a final image without uv
+# FROM python:3.11-slim-trixie
+# # It is important to use the image that matches the builder, as the path to the
+# # Python executable must be the same, e.g., using `python:3.11-slim-trixie`
+# # will fail.
+
+# # Setup a non-root user
+# RUN groupadd --system --gid 999 nonroot \
+#  && useradd --system --gid 999 --uid 999 --create-home nonroot
+
+# # # Copy the application from the builder
+# # COPY --from=builder --chown=nonroot:nonroot /app /app
+
+# # FIX: Instead of copying the full /app, copy ONLY the clean .venv 
+# # and the absolute necessary runtime files.
+# COPY --from=builder --chown=nonroot:nonroot /app/.venv /app/.venv
+# COPY --from=builder --chown=nonroot:nonroot /app/app.py /app/app.py
+# COPY --from=builder --chown=nonroot:nonroot /app/.streamlit /app/.streamlit
+
+# # Place executables in the environment at the front of the path
+# ENV PATH="/app/.venv/bin:$PATH"
+
+# # Keeps Python from buffering stdout and stderr to avoid situations where
+# # the application crashes without emitting any logs due to buffering.
+# ENV PYTHONUNBUFFERED=1
+
+# # Use the non-root user to run our application
+# USER nonroot
+
+# # Use `/app` as the working directory
+# WORKDIR /app
+
+# # Run the Streamlit application by default
+# CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

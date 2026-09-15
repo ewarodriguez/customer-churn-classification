@@ -1,0 +1,31 @@
+# Block local python cache files
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Block local development environments and credentials
+.uv
+.venv/
+venv
+.env
+.git/
+.gitignore
+.gitattributes
+
+# Block OS specific metadata junk
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# PRODUCTION SCRUB: Block raw data and docs
+# ==========================================
+*.csv
+*.xlsx
+*.md
+data/
+notebooks/
+.devcontainer
+
+# Block specific local runner scripts
+run_app.py

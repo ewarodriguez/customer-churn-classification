@@ -1,0 +1,54 @@
+name: classification_customer_churn_tool
+
+services:
+  classification-app:
+    build:
+      context: .
+    image: img_classification_customer_churn:latest
+    container_name: cont_classification_customer_churn
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+      # PROTECTS the virtual environment from being overwritten by your local files
+      - /app/.venv/
+      # PERSISTS any local models/caches safely to the authorized nonroot home path
+      - churn-cache:/home/nonroot/.cache
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_FILE_WATCHER_TYPE=poll
+      # FIX: Silences warnings by cleanly routing the Matplotlib sandbox to /tmp
+      - MPLCONFIGDIR=/tmp/matplotlib
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  churn-cache:
+
+
+# name: classification_customer_churn_tool
+
+# services:
+#   classification-app:
+#     build: .
+#     image: img_classification_customer_churn:latest
+#     container_name: cont_classification_customer_churn
+#     ports:
+#       - "8501:8501"
+#     volumes:
+#       - .:/app
+#       # PROTECTS the virtual environment from being overwritten by your local files
+#       - /app/.venv/
+#       # Keeps the memory workspace active while your code changes synchronize
+#       - /app/.streamlit/
+#     environment:
+#       - STREAMLIT_SERVER_HEADLESS=true
+#       - STREAMLIT_SERVER_FILE_WATCHER_TYPE=poll
+#     logging:
+#       driver: "json-file"
+#       options:
+#         max-size: "10m"
+#         max-file: "3"
