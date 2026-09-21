@@ -1,4 +1,4 @@
-# Customer Churn Prediction Model
+# 🔮 Customer Churn Prediction App
 
 ## 📌 Project Overview
 Customer churn—the rate at which customers close their accounts—is a critical metric for retail banking. Because retaining an existing customer is significantly more cost-effective than acquiring a new one, predicting churn allows financial institutions to take proactive retention measures.
