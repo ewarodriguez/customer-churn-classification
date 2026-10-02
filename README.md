@@ -50,7 +50,6 @@ To find the optimal predictive model, various supervised machine learning classi
 │   └── Classification_Customer_Churn.ipynb  # Jupyter notebook containing EDA and model building
 ├── .gitignore                               # Configuration to exclude data files and dependencies
 └── app.py                                   # Main Python App File
-└── requirements.txt                         # Requirements File containing the package needed to build the app
 └── README.md                                # Project documentation
 ```
 
