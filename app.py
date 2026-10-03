@@ -354,15 +354,15 @@ if uploaded_file is not None:
 
             with col1:
                 with st.container(border=True):
-                    st.metric(label="Churn Rate", value=f"{churn_rate:.2f}%")
+                    st.metric(label="Predicted Churn Rate", value=f"{churn_rate:.2f}%")
 
             with col2:
                 with st.container(border=True):
-                    st.metric(label="Total Flagged Churners", value=f"{churned_count:,}")
+                    st.metric(label="Total Predicted Churners", value=f"{churned_count:,}")
 
             with col3:
                 with st.container(border=True):
-                    st.metric(label="Total Flagged Retained", value=f"{retained_count:,}")
+                    st.metric(label="Total Predicted Retained", value=f"{retained_count:,}")
 
             with col4:
                 with st.container(border=True):
